@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
-import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Search, Filter, Plus, ArrowUpDown, Eye, Edit, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
-import { useUniversities } from "@/hooks/useUniversities";
+import { useUniversities, useDeleteUniversity } from "@/hooks/useUniversities";
 import { AddUniversityDialog } from "@/components/forms/AddUniversityDialog";
+import { UniversityDetailDialog } from "@/components/forms/UniversityDetailDialog";
+import { EditUniversityDialog } from "@/components/forms/EditUniversityDialog";
+import { Database } from "@/integrations/supabase/types";
+import { toast } from "sonner";
+
+type University = Database['public']['Tables']['universities']['Row'];
 
 export function UniversityTable() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,8 +25,14 @@ export function UniversityTable() {
   const [locationFilter, setLocationFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedUniversities, setSelectedUniversities] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   const { data: universities = [], isLoading } = useUniversities();
+  const deleteUniversity = useDeleteUniversity();
 
   const filteredAndSortedUniversities = useMemo(() => {
     const filtered = universities.filter(university => {
@@ -62,7 +75,7 @@ export function UniversityTable() {
       if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
-  }, [searchTerm, statusFilter, tagFilter, locationFilter, sortBy, sortOrder]);
+  }, [universities, searchTerm, statusFilter, tagFilter, locationFilter, sortBy, sortOrder]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -74,6 +87,64 @@ export function UniversityTable() {
   };
 
   const uniqueLocations = [...new Set(universities.map(u => u.location))];
+
+  const handleViewUniversity = (university: University) => {
+    setSelectedUniversity(university);
+    setShowDetailDialog(true);
+  };
+
+  const handleEditUniversity = (university: University) => {
+    setSelectedUniversity(university);
+    setShowEditDialog(true);
+  };
+
+  const handleSelectUniversity = (universityId: string, checked: boolean) => {
+    const newSelected = new Set(selectedUniversities);
+    if (checked) {
+      newSelected.add(universityId);
+    } else {
+      newSelected.delete(universityId);
+    }
+    setSelectedUniversities(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUniversities(new Set(filteredAndSortedUniversities.map(u => u.id)));
+    } else {
+      setSelectedUniversities(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      const deletePromises = Array.from(selectedUniversities).map(id => 
+        deleteUniversity.mutateAsync(id)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      toast.success(`Successfully deleted ${selectedUniversities.size} universities`);
+      setSelectedUniversities(new Set());
+      setShowBulkDeleteDialog(false);
+    } catch (error) {
+      toast.error("Failed to delete some universities. Please try again.");
+      console.error("Bulk delete error:", error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading universities...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -95,6 +166,33 @@ export function UniversityTable() {
         </div>
         <AddUniversityDialog />
       </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedUniversities.size > 0 && (
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+          <div className="text-sm text-muted-foreground">
+            {selectedUniversities.size} universities selected
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedUniversities(new Set())}
+            >
+              Clear Selection
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowBulkDeleteDialog(true)}
+              className="flex items-center gap-1"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Filter Row */}
       <div className="flex flex-wrap gap-2">
@@ -161,6 +259,13 @@ export function UniversityTable() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={selectedUniversities.size === filteredAndSortedUniversities.length && filteredAndSortedUniversities.length > 0}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all universities"
+                />
+              </TableHead>
               <TableHead 
                 className="cursor-pointer hover:bg-muted/50" 
                 onClick={() => handleSort("name")}
@@ -205,13 +310,20 @@ export function UniversityTable() {
           <TableBody>
             {filteredAndSortedUniversities.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No universities found matching your criteria.
                 </TableCell>
               </TableRow>
             ) : (
               filteredAndSortedUniversities.map(university => (
                 <TableRow key={university.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedUniversities.has(university.id)}
+                      onCheckedChange={(checked) => handleSelectUniversity(university.id, !!checked)}
+                      aria-label={`Select ${university.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div>
                       <div className="font-semibold">{university.name}</div>
@@ -253,10 +365,22 @@ export function UniversityTable() {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/universities/${university.id}`}>View</Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewUniversity(university)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-3 w-3" />
+                        View
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditUniversity(university)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-3 w-3" />
                         Edit
                       </Button>
                     </div>
@@ -267,6 +391,45 @@ export function UniversityTable() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Detail and Edit Dialogs */}
+      {selectedUniversity && (
+        <>
+          <UniversityDetailDialog
+            university={selectedUniversity}
+            open={showDetailDialog}
+            onOpenChange={setShowDetailDialog}
+          />
+          <EditUniversityDialog
+            university={selectedUniversity}
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+          />
+        </>
+      )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Universities</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedUniversities.size} selected universities? 
+              This will also delete all associated deadlines and documents. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteUniversity.isPending}
+            >
+              {deleteUniversity.isPending ? "Deleting..." : `Delete ${selectedUniversities.size} Universities`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

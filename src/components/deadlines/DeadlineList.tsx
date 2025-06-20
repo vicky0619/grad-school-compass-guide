@@ -2,12 +2,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { useDeadlines, useUpdateDeadline } from "@/hooks/useDeadlines";
-import { Calendar } from "lucide-react";
+import { Calendar, Edit } from "lucide-react";
+import { EditDeadlineDialog } from "@/components/forms/EditDeadlineDialog";
+import { useState } from "react";
+import { Database } from "@/integrations/supabase/types";
+
+type Deadline = Database['public']['Tables']['deadlines']['Row'] & {
+  universities?: { name: string; program_name: string };
+};
 
 export function DeadlineList() {
   const { data: deadlines = [], isLoading } = useDeadlines();
   const updateDeadline = useUpdateDeadline();
+  const [selectedDeadline, setSelectedDeadline] = useState<Deadline | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   // Sort deadlines by date
   const sortedDeadlines = [...deadlines].sort((a, b) => 
@@ -24,6 +34,11 @@ export function DeadlineList() {
     } catch (error) {
       console.error("Failed to update deadline:", error);
     }
+  };
+
+  const handleEditDeadline = (deadline: Deadline) => {
+    setSelectedDeadline(deadline);
+    setShowEditDialog(true);
   };
 
   if (isLoading) {
@@ -45,41 +60,64 @@ export function DeadlineList() {
   }
   
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>All Deadlines</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {sortedDeadlines.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No deadlines added yet</p>
-            <p className="text-sm">Add your first deadline to get started</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {sortedDeadlines.map(deadline => (
-              <div key={deadline.id} className="flex items-center space-x-4">
-                <Checkbox 
-                  id={`deadline-${deadline.id}`} 
-                  checked={deadline.completed}
-                  onCheckedChange={() => toggleDeadline(deadline.id, deadline.completed)}
-                />
-                <div className={`flex-1 ${deadline.completed ? 'line-through text-muted-foreground' : ''}`}>
-                  <div className="text-sm font-medium">{deadline.title}</div>
-                  <div className="text-xs text-muted-foreground">{deadline.universities?.name || "Unknown University"}</div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Deadlines</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sortedDeadlines.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No deadlines added yet</p>
+              <p className="text-sm">Add your first deadline to get started</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedDeadlines.map(deadline => (
+                <div key={deadline.id} className="flex items-center space-x-4 p-3 rounded-md border hover:bg-accent/10 transition-colors">
+                  <Checkbox 
+                    id={`deadline-${deadline.id}`} 
+                    checked={deadline.completed}
+                    onCheckedChange={() => toggleDeadline(deadline.id, deadline.completed)}
+                  />
+                  <div className={`flex-1 ${deadline.completed ? 'line-through text-muted-foreground' : ''}`}>
+                    <div className="text-sm font-medium">{deadline.title}</div>
+                    <div className="text-xs text-muted-foreground">{deadline.universities?.name || "Unknown University"}</div>
+                    {deadline.description && (
+                      <div className="text-xs text-muted-foreground mt-1">{deadline.description}</div>
+                    )}
+                  </div>
+                  <div className="text-sm">
+                    {format(new Date(deadline.date), "MMM d, yyyy")}
+                  </div>
+                  <div className="text-xs px-2 py-1 rounded-full bg-muted">
+                    {deadline.type.charAt(0).toUpperCase() + deadline.type.slice(1)}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditDeadline(deadline)}
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Edit
+                  </Button>
                 </div>
-                <div className="text-sm">
-                  {format(new Date(deadline.date), "MMM d, yyyy")}
-                </div>
-                <div className="text-xs px-2 py-1 rounded-full bg-muted">
-                  {deadline.type.charAt(0).toUpperCase() + deadline.type.slice(1)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Edit Dialog */}
+      {selectedDeadline && (
+        <EditDeadlineDialog
+          deadline={selectedDeadline}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+        />
+      )}
+    </>
   );
 }
