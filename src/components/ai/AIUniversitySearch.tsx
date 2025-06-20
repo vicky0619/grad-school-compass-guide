@@ -6,101 +6,47 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Sparkles, Search, MapPin, Star, TrendingUp, Globe, Calendar, DollarSign } from "lucide-react";
+import { Sparkles, Search, MapPin, Star, TrendingUp, Globe, Calendar, DollarSign, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface UniversityData {
-  id: string;
-  name: string;
-  location: string;
-  country: string;
-  ranking: number;
-  acceptance_rate: number;
-  tuition: number;
-  application_deadline: string;
-  programs: string[];
-  requirements: {
-    gpa: number;
-    gre: number;
-    toefl: number;
-  };
-  website: string;
-}
-
-// Mock AI 數據 - 實際應用中會連接真實 API
-const mockUniversityData: UniversityData[] = [
-  {
-    id: "stanford",
-    name: "Stanford University",
-    location: "Stanford, CA",
-    country: "USA",
-    ranking: 2,
-    acceptance_rate: 4.3,
-    tuition: 56169,
-    application_deadline: "2024-12-01",
-    programs: ["Computer Science", "Engineering", "Business", "Medicine"],
-    requirements: { gpa: 3.9, gre: 328, toefl: 100 },
-    website: "https://www.stanford.edu"
-  },
-  {
-    id: "mit",
-    name: "Massachusetts Institute of Technology",
-    location: "Cambridge, MA", 
-    country: "USA",
-    ranking: 1,
-    acceptance_rate: 6.7,
-    tuition: 53790,
-    application_deadline: "2024-12-15",
-    programs: ["Computer Science", "Engineering", "Physics", "Mathematics"],
-    requirements: { gpa: 3.9, gre: 330, toefl: 100 },
-    website: "https://www.mit.edu"
-  },
-  {
-    id: "oxford",
-    name: "University of Oxford",
-    location: "Oxford",
-    country: "UK", 
-    ranking: 4,
-    acceptance_rate: 17.5,
-    tuition: 35000,
-    application_deadline: "2024-12-01",
-    programs: ["Computer Science", "Engineering", "Medicine", "Law"],
-    requirements: { gpa: 3.8, gre: 320, toefl: 100 },
-    website: "https://www.ox.ac.uk"
-  }
-];
+import { perplexityApi, UniversitySearchResult } from "@/services/perplexityApi";
+import { toast } from "sonner";
 
 interface AIUniversitySearchProps {
-  onUniversitySelect: (university: UniversityData) => void;
+  onUniversitySelect: (university: UniversitySearchResult) => void;
 }
 
 export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchProps) {
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<UniversityData[]>([]);
+  const [suggestions, setSuggestions] = useState<UniversitySearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // AI 搜索模擬
+  // 真實 AI 搜索
   const performAISearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
     
     setIsLoading(true);
+    setError(null);
     
-    // 模擬 AI API 調用延遲
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // 智能匹配邏輯
-    const filtered = mockUniversityData.filter(university => 
-      university.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      university.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      university.programs.some(program => 
-        program.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-    
-    setSuggestions(filtered);
-    setIsLoading(false);
-    setOpen(true);
+    try {
+      console.log('Searching for:', searchQuery);
+      const results = await perplexityApi.searchUniversities(searchQuery);
+      console.log('Search results:', results);
+      
+      setSuggestions(results);
+      setOpen(true);
+      
+      if (results.length === 0) {
+        toast.info("No universities found for your search. Try different keywords.");
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      setError('Search failed. Please try again.');
+      toast.error("Search failed. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -113,7 +59,7 @@ export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchPro
     return () => clearTimeout(debounceTimer);
   }, [query]);
 
-  const handleUniversitySelect = (university: UniversityData) => {
+  const handleUniversitySelect = (university: UniversitySearchResult) => {
     onUniversitySelect(university);
     setOpen(false);
     setQuery("");
@@ -157,6 +103,13 @@ export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchPro
                     <span className="text-sm text-muted-foreground">AI is searching universities...</span>
                   </div>
                 </div>
+              ) : error ? (
+                <div className="flex items-center justify-center p-6">
+                  <div className="flex items-center space-x-2 text-red-600">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm">{error}</span>
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-center justify-center p-6">
                   <span className="text-sm text-muted-foreground">No universities found. Try a different search.</span>
@@ -166,9 +119,9 @@ export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchPro
             
             <CommandGroup heading="AI Suggestions">
               <CommandList>
-                {suggestions.map((university) => (
+                {suggestions.map((university, index) => (
                   <CommandItem
-                    key={university.id}
+                    key={`${university.name}-${index}`}
                     onSelect={() => handleUniversitySelect(university)}
                     className="p-0"
                   >
@@ -178,9 +131,11 @@ export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchPro
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
                               <h4 className="font-semibold text-sm">{university.name}</h4>
-                              <Badge variant="outline" className="text-xs">
-                                #{university.ranking} Global
-                              </Badge>
+                              {university.ranking && (
+                                <Badge variant="outline" className="text-xs">
+                                  #{university.ranking} Global
+                                </Badge>
+                              )}
                             </div>
                             
                             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
@@ -188,19 +143,23 @@ export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchPro
                                 <MapPin className="h-3 w-3" />
                                 <span>{university.location}</span>
                               </div>
-                              <div className="flex items-center space-x-1">
-                                <TrendingUp className="h-3 w-3" />
-                                <span>{university.acceptance_rate}% acceptance</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <DollarSign className="h-3 w-3" />
-                                <span>${university.tuition.toLocaleString()}/year</span>
-                              </div>
+                              {university.acceptanceRate && (
+                                <div className="flex items-center space-x-1">
+                                  <TrendingUp className="h-3 w-3" />
+                                  <span>{university.acceptanceRate}% acceptance</span>
+                                </div>
+                              )}
+                              {university.tuition && (
+                                <div className="flex items-center space-x-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  <span>${university.tuition.toLocaleString()}/year</span>
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex flex-wrap gap-1">
-                              {university.programs.slice(0, 3).map((program) => (
-                                <Badge key={program} variant="secondary" className="text-xs">
+                              {university.programs.slice(0, 3).map((program, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
                                   {program}
                                 </Badge>
                               ))}
@@ -210,17 +169,25 @@ export function AIUniversitySearch({ onUniversitySelect }: AIUniversitySearchPro
                                 </Badge>
                               )}
                             </div>
+                            
+                            {university.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {university.description}
+                              </p>
+                            )}
                           </div>
                           
                           <div className="text-right space-y-1">
                             <div className="flex items-center space-x-1">
-                              <Star className="h-3 w-3 text-yellow-500" />
-                              <span className="text-xs font-medium">AI Match: 95%</span>
+                              <Sparkles className="h-3 w-3 text-primary" />
+                              <span className="text-xs font-medium">AI Powered</span>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <Calendar className="h-3 w-3 text-blue-500" />
-                              <span className="text-xs">Due: Dec 1</span>
-                            </div>
+                            {university.deadline && (
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="h-3 w-3 text-blue-500" />
+                                <span className="text-xs">{new Date(university.deadline).toLocaleDateString()}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </CardContent>

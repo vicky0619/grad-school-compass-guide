@@ -71,14 +71,14 @@ export function AddUniversityDialog() {
       name: university.name,
       program_name: university.programs[0] || "",
       location: university.location,
-      deadline: university.application_deadline,
-      url: university.website,
-      application_fee: university.tuition.toString(),
+      deadline: university.deadline || "",
+      url: university.website || "",
+      application_fee: university.tuition?.toString() || "",
       status: "researching",
       tag: "target",
-      notes: `AI suggested university. Ranking: #${university.ranking}, Acceptance rate: ${university.acceptance_rate}%`
+      notes: `AI suggested university.${university.ranking ? ` Ranking: #${university.ranking}` : ''}${university.acceptanceRate ? `, Acceptance rate: ${university.acceptanceRate}%` : ''}${university.description ? `\n\n${university.description}` : ''}`
     });
-    toast.success(`University data filled from AI search!`);
+    toast.success(`✨ University data filled from AI search!`);
   };
 
   return (

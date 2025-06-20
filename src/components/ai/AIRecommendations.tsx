@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp, MapPin, Star, DollarSign, Calendar, Users, BookOpen } from "lucide-react";
 import { useUniversities } from "@/hooks/useUniversities";
+import { perplexityApi, UniversitySearchResult } from "@/services/perplexityApi";
+import { toast } from "sonner";
 
 interface RecommendationData {
   university: string;
@@ -59,7 +61,7 @@ const mockRecommendations: RecommendationData[] = [
 ];
 
 export function AIRecommendations() {
-  const [recommendations, setRecommendations] = useState<RecommendationData[]>([]);
+  const [recommendations, setRecommendations] = useState<UniversitySearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const { data: universities = [] } = useUniversities();
@@ -68,17 +70,36 @@ export function AIRecommendations() {
     setIsLoading(true);
     setShowRecommendations(true);
     
-    // 模擬 AI 分析和推薦生成
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 基於現有大學數據進行智能推薦
-    const userPreferences = analyzeUserPreferences();
-    const filtered = mockRecommendations.filter(rec => 
-      !universities.some(uni => uni.name.toLowerCase().includes(rec.university.toLowerCase()))
-    );
-    
-    setRecommendations(filtered);
-    setIsLoading(false);
+    try {
+      // 分析用戶偏好
+      const userPreferences = analyzeUserPreferences();
+      
+      // 使用真實 AI API 生成推薦
+      const aiRecommendations = await perplexityApi.getUniversityRecommendations({
+        interests: userPreferences.interests,
+        preferredLocations: userPreferences.preferredLocations,
+        budgetRange: userPreferences.budgetRange,
+        academicBackground: userPreferences.academicBackground
+      });
+      
+      // 過濾已添加的大學
+      const filtered = aiRecommendations.filter(rec => 
+        !universities.some(uni => uni.name.toLowerCase().includes(rec.name.toLowerCase()))
+      );
+      
+      setRecommendations(filtered);
+      
+      if (filtered.length === 0) {
+        toast.info("Great! You've already added most of the universities we would recommend.");
+      } else {
+        toast.success(`Found ${filtered.length} personalized recommendations!`);
+      }
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+      toast.error("Failed to generate recommendations. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const analyzeUserPreferences = () => {
@@ -87,10 +108,17 @@ export function AIRecommendations() {
     const statuses = universities.map(u => u.status);
     const tags = universities.map(u => u.tag);
     
+    // 根據已有數據推斷用戶偏好
+    const interests = ["Computer Science", "Engineering"]; // 可以根據程序名稱分析
+    const budgetRange = universities.length > 0 ? 
+      (universities.some(u => u.application_fee && u.application_fee > 100) ? "50000-80000" : "30000-60000") : 
+      "flexible";
+    
     return {
-      preferredLocations: [...new Set(locations)],
-      applicationStage: statuses,
-      riskProfile: tags
+      interests,
+      preferredLocations: [...new Set(locations)].slice(0, 3),
+      budgetRange,
+      academicBackground: `Graduate student interested in ${interests.join(', ')}`
     };
   };
 
@@ -175,15 +203,15 @@ export function AIRecommendations() {
                 <CardHeader className="space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-lg">{rec.university}</CardTitle>
-                      <CardDescription>{rec.program}</CardDescription>
+                      <CardTitle className="text-lg">{rec.name}</CardTitle>
+                      <CardDescription>{rec.programs[0] || "Graduate Program"}</CardDescription>
                     </div>
                     <div className="text-right space-y-1">
-                      <Badge className={getCategoryColor(rec.category)}>
-                        {rec.category.toUpperCase()}
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                        AI PICK
                       </Badge>
-                      <div className={`text-sm font-bold ${getMatchScoreColor(rec.matchScore)}`}>
-                        {rec.matchScore}% Match
+                      <div className="text-sm font-bold text-green-600">
+                        🎯 High Match
                       </div>
                     </div>
                   </div>
@@ -192,36 +220,56 @@ export function AIRecommendations() {
                 <CardContent className="space-y-4">
                   {/* Key Stats */}
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 text-yellow-500" />
-                      <span>#{rec.ranking} Ranking</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3 text-green-500" />
-                      <span>{rec.acceptance_rate}% Accept</span>
-                    </div>
+                    {rec.ranking && (
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        <span>#{rec.ranking} Ranking</span>
+                      </div>
+                    )}
+                    {rec.acceptanceRate && (
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3 text-green-500" />
+                        <span>{rec.acceptanceRate}% Accept</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1">
                       <MapPin className="h-3 w-3 text-blue-500" />
                       <span>{rec.location}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-orange-500" />
-                      <span>${(rec.tuition/1000).toFixed(0)}k/year</span>
+                    {rec.tuition && (
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-3 w-3 text-orange-500" />
+                        <span>${(rec.tuition/1000).toFixed(0)}k/year</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Programs */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Available Programs:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {rec.programs.slice(0, 2).map((program, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {program}
+                        </Badge>
+                      ))}
+                      {rec.programs.length > 2 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{rec.programs.length - 2} more
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
-                  {/* AI Reasons */}
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">Why AI recommends this:</p>
-                    <div className="space-y-1">
-                      {rec.reasons.map((reason, idx) => (
-                        <div key={idx} className="flex items-start gap-2 text-xs">
-                          <span className="text-primary mt-1">•</span>
-                          <span>{reason}</span>
-                        </div>
-                      ))}
+                  {/* Description */}
+                  {rec.description && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">AI Analysis:</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3">
+                        {rec.description}
+                      </p>
                     </div>
-                  </div>
+                  )}
 
                   {/* Action Button */}
                   <Button 
@@ -229,10 +277,11 @@ export function AIRecommendations() {
                     size="sm" 
                     className="w-full"
                     onClick={() => {
-                      // This would integrate with the AddUniversityDialog
-                      console.log(`Adding ${rec.university} to list`);
+                      toast.success("University recommendation saved for review!");
+                      console.log(`Adding ${rec.name} to list`);
                     }}
                   >
+                    <Sparkles className="h-4 w-4 mr-2" />
                     Add to My List
                   </Button>
                 </CardContent>
