@@ -3,9 +3,10 @@ import { UniversityTable } from "@/components/universities/UniversityTable";
 import { RequirementsTracker } from "@/components/universities/RequirementsTracker";
 import { PostGradPlanning } from "@/components/post-grad/PostGradPlanning";
 import { AddUniversityDialog } from "@/components/forms/AddUniversityDialog";
+import { AIRecommendations } from "@/components/ai/AIRecommendations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Target, GraduationCap } from "lucide-react";
+import { BarChart3, Target, GraduationCap, Sparkles } from "lucide-react";
 import { useUniversities } from "@/hooks/useUniversities";
 
 export default function Universities() {
@@ -94,8 +95,12 @@ export default function Universities() {
       </div>
 
       <Tabs defaultValue="list" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="list">University List</TabsTrigger>
+          <TabsTrigger value="ai-recommendations" className="flex items-center gap-1">
+            <Sparkles className="h-4 w-4" />
+            AI Recommendations
+          </TabsTrigger>
           <TabsTrigger value="requirements">Requirements</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="career">Career Planning</TabsTrigger>
@@ -103,6 +108,10 @@ export default function Universities() {
         
         <TabsContent value="list" className="space-y-4">
           <UniversityTable />
+        </TabsContent>
+        
+        <TabsContent value="ai-recommendations" className="space-y-4">
+          <AIRecommendations />
         </TabsContent>
         
         <TabsContent value="requirements" className="space-y-4">

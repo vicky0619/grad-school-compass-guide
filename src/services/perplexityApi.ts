@@ -47,7 +47,9 @@ class PerplexityApiService {
   constructor() {
     this.apiKey = import.meta.env.VITE_PERPLEXITY_API_KEY;
     if (!this.apiKey) {
-      throw new Error('Perplexity API key not found. Please set VITE_PERPLEXITY_API_KEY in your environment variables.');
+      console.warn('Perplexity API key not found. Please set VITE_PERPLEXITY_API_KEY in your environment variables.');
+      // Don't throw error to prevent app from breaking
+      this.apiKey = '';
     }
   }
 
@@ -81,6 +83,9 @@ class PerplexityApiService {
   }
 
   async searchUniversities(query: string): Promise<UniversitySearchResult[]> {
+    if (!this.apiKey) {
+      throw new Error('API key not configured. Please add your Perplexity API key to environment variables.');
+    }
     const prompt = `
     Search for universities based on this query: "${query}"
 
@@ -204,6 +209,9 @@ class PerplexityApiService {
     budgetRange: string;
     academicBackground: string;
   }): Promise<UniversitySearchResult[]> {
+    if (!this.apiKey) {
+      throw new Error('API key not configured. Please add your Perplexity API key to environment variables.');
+    }
     const prompt = `
     Based on this user profile, recommend suitable universities:
     - Interests: ${userProfile.interests.join(', ')}
@@ -270,5 +278,26 @@ class PerplexityApiService {
   }
 }
 
-export const perplexityApi = new PerplexityApiService();
+// Initialize API service with error handling
+let perplexityApi: PerplexityApiService;
+
+try {
+  perplexityApi = new PerplexityApiService();
+} catch (error) {
+  console.warn('Failed to initialize Perplexity API service:', error);
+  // Create a fallback service that throws user-friendly errors
+  perplexityApi = {
+    async searchUniversities() {
+      throw new Error('API service not available. Please check your configuration.');
+    },
+    async getUniversityDetails() {
+      return null;
+    },
+    async getUniversityRecommendations() {
+      throw new Error('API service not available. Please check your configuration.');
+    }
+  } as PerplexityApiService;
+}
+
+export { perplexityApi };
 export type { UniversitySearchResult };
