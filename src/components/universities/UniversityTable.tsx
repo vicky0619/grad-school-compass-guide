@@ -147,30 +147,33 @@ export function UniversityTable() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 items-center space-x-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search universities, programs, locations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">Universities</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your university applications and track progress
+          </p>
         </div>
         <AddUniversityDialog />
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search universities..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 border-0 bg-muted/50"
+        />
+      </div>
+
       {/* Bulk Actions Bar */}
       {selectedUniversities.size > 0 && (
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
+          <div className="text-sm font-medium text-blue-700">
             {selectedUniversities.size} universities selected
           </div>
           <div className="flex gap-2">
@@ -178,8 +181,9 @@ export function UniversityTable() {
               variant="outline"
               size="sm"
               onClick={() => setSelectedUniversities(new Set())}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50"
             >
-              Clear Selection
+              Clear
             </Button>
             <Button
               variant="destructive"
@@ -188,208 +192,125 @@ export function UniversityTable() {
               className="flex items-center gap-1"
             >
               <Trash2 className="h-4 w-4" />
-              Delete Selected
+              Delete
             </Button>
           </div>
         </div>
       )}
 
-      {/* Filter Row */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="researching">Researching</SelectItem>
-            <SelectItem value="applied">Applied</SelectItem>
-            <SelectItem value="admitted">Admitted</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={tagFilter} onValueChange={setTagFilter}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Tag" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Tags</SelectItem>
-            <SelectItem value="reach">Reach</SelectItem>
-            <SelectItem value="target">Target</SelectItem>
-            <SelectItem value="safety">Safety</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={locationFilter} onValueChange={setLocationFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            {uniqueLocations.map(location => (
-              <SelectItem key={location} value={location.toLowerCase()}>{location}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {(searchTerm || statusFilter !== "all" || tagFilter !== "all" || locationFilter !== "all") && (
+      {/* Quick Filters */}
+      {(statusFilter !== "all" || tagFilter !== "all" || locationFilter !== "all") && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground">Filters:</span>
+          {statusFilter !== "all" && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Status: {statusFilter}
+              <button onClick={() => setStatusFilter("all")} className="ml-1 hover:bg-muted rounded-full p-0.5">
+                ×
+              </button>
+            </Badge>
+          )}
+          {tagFilter !== "all" && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Tag: {tagFilter}
+              <button onClick={() => setTagFilter("all")} className="ml-1 hover:bg-muted rounded-full p-0.5">
+                ×
+              </button>
+            </Badge>
+          )}
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => {
               setSearchTerm("");
               setStatusFilter("all");
               setTagFilter("all");
               setLocationFilter("all");
             }}
+            className="text-xs"
           >
-            Clear Filters
+            Clear all
           </Button>
+        </div>
+      )}
+
+      {/* Clean Cards Layout */}
+      <div className="space-y-3">
+        {filteredAndSortedUniversities.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <div className="text-4xl mb-4">🎓</div>
+            <p className="text-lg font-medium">No universities found</p>
+            <p className="text-sm">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          filteredAndSortedUniversities.map(university => (
+            <div key={university.id} className="bg-card border border-border rounded-xl p-6 hover:shadow-sm transition-all duration-200">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4">
+                  <Checkbox
+                    checked={selectedUniversities.has(university.id)}
+                    onCheckedChange={(checked) => handleSelectUniversity(university.id, !!checked)}
+                    className="mt-1"
+                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <h3 className="font-semibold text-lg text-foreground">{university.name}</h3>
+                      <Badge 
+                        className={`
+                          ${university.status === 'admitted' ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                          ${university.status === 'applied' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
+                          ${university.status === 'researching' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : ''}
+                          ${university.status === 'rejected' ? 'bg-amber-100 text-amber-700 border-amber-200' : ''}
+                          ${university.status === 'pending' ? 'bg-violet-100 text-violet-700 border-violet-200' : ''}
+                        `}
+                      >
+                        {university.status.charAt(0).toUpperCase() + university.status.slice(1)}
+                      </Badge>
+                      <Badge 
+                        variant="outline"
+                        className={`
+                          ${university.tag === 'reach' ? 'border-red-200 text-red-600' : ''}
+                          ${university.tag === 'target' ? 'border-blue-200 text-blue-600' : ''}
+                          ${university.tag === 'safety' ? 'border-green-200 text-green-600' : ''}
+                        `}
+                      >
+                        {university.tag.charAt(0).toUpperCase() + university.tag.slice(1)}
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground">{university.program_name}</p>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <span>📍 {university.location}</span>
+                      <span>📅 {format(new Date(university.deadline), "MMM d, yyyy")}</span>
+                      {university.application_fee && (
+                        <span>💰 ${university.application_fee}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewUniversity(university)}
+                    className="flex items-center gap-1"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditUniversity(university)}
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
         )}
-      </div>
-
-      {/* Results Count */}
-      <div className="text-sm text-muted-foreground">
-        Showing {filteredAndSortedUniversities.length} of {universities.length} universities
-      </div>
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedUniversities.size === filteredAndSortedUniversities.length && filteredAndSortedUniversities.length > 0}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all universities"
-                />
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-muted/50" 
-                onClick={() => handleSort("name")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>University</span>
-                  <ArrowUpDown className="h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead>Program</TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-muted/50" 
-                onClick={() => handleSort("location")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Location</span>
-                  <ArrowUpDown className="h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-muted/50" 
-                onClick={() => handleSort("deadline")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Deadline</span>
-                  <ArrowUpDown className="h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-muted/50" 
-                onClick={() => handleSort("status")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Status</span>
-                  <ArrowUpDown className="h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead>Tag</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAndSortedUniversities.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No universities found matching your criteria.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredAndSortedUniversities.map(university => (
-                <TableRow key={university.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedUniversities.has(university.id)}
-                      onCheckedChange={(checked) => handleSelectUniversity(university.id, !!checked)}
-                      aria-label={`Select ${university.name}`}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div className="font-semibold">{university.name}</div>
-                      <div className="text-sm text-muted-foreground">{university.url && (
-                        <a href={university.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                          Visit Website
-                        </a>
-                      )}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{university.program_name}</div>
-                    {university.application_fee && (
-                      <div className="text-sm text-muted-foreground">${university.application_fee} fee</div>
-                    )}
-                  </TableCell>
-                  <TableCell>{university.location}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{format(new Date(university.deadline), "MMM d, yyyy")}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {Math.ceil((new Date(university.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="secondary" 
-                      className={`status-badge status-${university.status}`}
-                    >
-                      {university.status.charAt(0).toUpperCase() + university.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="outline" 
-                      className={`tag-${university.tag}`}
-                    >
-                      {university.tag.charAt(0).toUpperCase() + university.tag.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleViewUniversity(university)}
-                        className="flex items-center gap-1"
-                      >
-                        <Eye className="h-3 w-3" />
-                        View
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEditUniversity(university)}
-                        className="flex items-center gap-1"
-                      >
-                        <Edit className="h-3 w-3" />
-                        Edit
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
       </div>
 
       {/* Detail and Edit Dialogs */}

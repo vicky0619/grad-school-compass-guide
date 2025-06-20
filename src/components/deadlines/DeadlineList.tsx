@@ -61,38 +61,56 @@ export function DeadlineList() {
   
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>All Deadlines</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {sortedDeadlines.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No deadlines added yet</p>
-              <p className="text-sm">Add your first deadline to get started</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sortedDeadlines.map(deadline => (
-                <div key={deadline.id} className="flex items-center space-x-4 p-3 rounded-md border hover:bg-accent/10 transition-colors">
-                  <Checkbox 
-                    id={`deadline-${deadline.id}`} 
-                    checked={deadline.completed}
-                    onCheckedChange={() => toggleDeadline(deadline.id, deadline.completed)}
-                  />
-                  <div className={`flex-1 ${deadline.completed ? 'line-through text-muted-foreground' : ''}`}>
-                    <div className="text-sm font-medium">{deadline.title}</div>
-                    <div className="text-xs text-muted-foreground">{deadline.universities?.name || "Unknown University"}</div>
-                    {deadline.description && (
-                      <div className="text-xs text-muted-foreground mt-1">{deadline.description}</div>
-                    )}
-                  </div>
-                  <div className="text-sm">
-                    {format(new Date(deadline.date), "MMM d, yyyy")}
-                  </div>
-                  <div className="text-xs px-2 py-1 rounded-full bg-muted">
-                    {deadline.type.charAt(0).toUpperCase() + deadline.type.slice(1)}
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">Deadlines</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track important dates and application deadlines
+          </p>
+        </div>
+
+        {sortedDeadlines.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-border">
+            <div className="text-4xl mb-4">📅</div>
+            <p className="text-lg font-medium">No deadlines yet</p>
+            <p className="text-sm">Add your first deadline to stay on track</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sortedDeadlines.map(deadline => (
+              <div key={deadline.id} className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Checkbox 
+                      checked={deadline.completed}
+                      onCheckedChange={() => toggleDeadline(deadline.id, deadline.completed)}
+                      className="scale-110"
+                    />
+                    <div className={`space-y-1 ${deadline.completed ? 'opacity-50' : ''}`}>
+                      <div className="flex items-center space-x-3">
+                        <h3 className={`font-medium ${deadline.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                          {deadline.title}
+                        </h3>
+                        <Badge className={`
+                          ${deadline.type === 'application' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
+                          ${deadline.type === 'interview' ? 'bg-purple-100 text-purple-700 border-purple-200' : ''}
+                          ${deadline.type === 'decision' ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                          ${deadline.type === 'document' ? 'bg-orange-100 text-orange-700 border-orange-200' : ''}
+                          ${deadline.type === 'test' ? 'bg-pink-100 text-pink-700 border-pink-200' : ''}
+                          ${deadline.type === 'other' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
+                        `}>
+                          {deadline.type.charAt(0).toUpperCase() + deadline.type.slice(1)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <span>🏫 {deadline.universities?.name || "Unknown University"}</span>
+                        <span>📅 {format(new Date(deadline.date), "MMM d, yyyy")}</span>
+                      </div>
+                      {deadline.description && (
+                        <p className="text-sm text-muted-foreground">{deadline.description}</p>
+                      )}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
@@ -100,15 +118,15 @@ export function DeadlineList() {
                     onClick={() => handleEditDeadline(deadline)}
                     className="flex items-center gap-1"
                   >
-                    <Edit className="h-3 w-3" />
+                    <Edit className="h-4 w-4" />
                     Edit
                   </Button>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       
       {/* Edit Dialog */}
       {selectedDeadline && (

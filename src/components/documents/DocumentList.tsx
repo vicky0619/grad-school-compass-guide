@@ -42,44 +42,67 @@ export function DocumentList() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>My Documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {documents.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No documents uploaded yet</p>
-              <p className="text-sm">Add your first document to get started</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {documents.map(doc => (
-                <div 
-                  key={doc.id} 
-                  className="flex items-center space-x-4 p-3 rounded-md border hover:bg-accent/10 transition-colors cursor-pointer"
-                  onClick={() => handleDocumentClick(doc)}
-                >
-                  <div className="bg-muted p-2 rounded-md">
-                    <FileText className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{doc.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {doc.universities?.name || "General"} • Last updated: {format(new Date(doc.updated_at), "MMM d, yyyy")}
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">Documents</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your application documents and track versions
+          </p>
+        </div>
+
+        {documents.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-border">
+            <div className="text-4xl mb-4">📄</div>
+            <p className="text-lg font-medium">No documents yet</p>
+            <p className="text-sm">Upload your first document to get started</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {documents.map(doc => (
+              <div 
+                key={doc.id} 
+                className="bg-card border border-border rounded-xl p-6 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                onClick={() => handleDocumentClick(doc)}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="bg-muted/50 p-3 rounded-lg">
+                      <FileText className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs">v{doc.version}</Badge>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline">v{doc.version}</Badge>
-                    <Badge>{doc.type.toUpperCase()}</Badge>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
+                      {doc.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {doc.universities?.name || "General"}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Badge className={`
+                        ${doc.type === 'sop' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
+                        ${doc.type === 'cv' ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                        ${doc.type === 'recommendation' ? 'bg-purple-100 text-purple-700 border-purple-200' : ''}
+                        ${doc.type === 'transcript' ? 'bg-orange-100 text-orange-700 border-orange-200' : ''}
+                        ${doc.type === 'other' ? 'bg-gray-100 text-gray-700 border-gray-200' : ''}
+                      `}>
+                        {doc.type.toUpperCase()}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(doc.updated_at), "MMM d")}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       
       {/* Document View Dialog */}
       {selectedDocument && (
