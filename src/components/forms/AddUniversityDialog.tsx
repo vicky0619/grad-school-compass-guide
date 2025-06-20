@@ -5,8 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlusCircle, Sparkles, Edit } from "lucide-react";
 import { useCreateUniversity } from "@/hooks/useUniversities";
+import { AIUniversitySearch } from "@/components/ai/AIUniversitySearch";
 import { toast } from "sonner";
 
 export function AddUniversityDialog() {
@@ -64,6 +66,21 @@ export function AddUniversityDialog() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAIUniversitySelect = (university: any) => {
+    setFormData({
+      name: university.name,
+      program_name: university.programs[0] || "",
+      location: university.location,
+      deadline: university.application_deadline,
+      url: university.website,
+      application_fee: university.tuition.toString(),
+      status: "researching",
+      tag: "target",
+      notes: `AI suggested university. Ranking: #${university.ranking}, Acceptance rate: ${university.acceptance_rate}%`
+    });
+    toast.success(`University data filled from AI search!`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -72,15 +89,36 @@ export function AddUniversityDialog() {
           Add University
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New University</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <PlusCircle className="h-5 w-5" />
+            Add New University
+          </DialogTitle>
           <DialogDescription>
-            Add a new university to your application list. Fill in the details below.
+            Use AI search for instant data or manually fill university details.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+        
+        <Tabs defaultValue="ai" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ai" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              AI Search
+            </TabsTrigger>
+            <TabsTrigger value="manual" className="flex items-center gap-2">
+              <Edit className="h-4 w-4" />
+              Manual Entry
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ai" className="space-y-4">
+            <AIUniversitySearch onUniversitySelect={handleAIUniversitySelect} />
+          </TabsContent>
+          
+          <TabsContent value="manual">
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 University
@@ -210,13 +248,30 @@ export function AddUniversityDialog() {
                 className="col-span-3"
               />
             </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={createUniversity.isPending}>
+                  {createUniversity.isPending ? "Adding..." : "Add University"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </TabsContent>
+        </Tabs>
+        
+        {/* Show filled data preview when AI fills the form */}
+        {formData.name && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">AI Data Filled</span>
+            </div>
+            <div className="text-sm text-green-700">
+              <strong>{formData.name}</strong> - {formData.program_name}
+              <br />
+              📍 {formData.location} | 📅 {formData.deadline}
+            </div>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={createUniversity.isPending}>
-              {createUniversity.isPending ? "Adding..." : "Add University"}
-            </Button>
-          </DialogFooter>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   );
