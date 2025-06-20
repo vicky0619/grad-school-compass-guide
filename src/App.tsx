@@ -4,12 +4,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Universities from "./pages/Universities";
 import Deadlines from "./pages/Deadlines";
 import Documents from "./pages/Documents";
 import Calendar from "./pages/Calendar";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,16 +23,47 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/universities" element={<Universities />} />
-            <Route path="/deadlines" element={<Deadlines />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/universities" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Universities />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/deadlines" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Deadlines />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/documents" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Documents />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/calendar" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Calendar />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AppLayout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
