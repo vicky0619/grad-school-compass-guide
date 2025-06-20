@@ -88,11 +88,11 @@ export default function Dashboard() {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Researching', value: universities.filter(u => u.status === 'researching').length, color: '#BCCCDC' },
-                    { name: 'Applied', value: universities.filter(u => u.status === 'applied').length, color: '#D9EAFD' },
-                    { name: 'Admitted', value: universities.filter(u => u.status === 'admitted').length, color: '#9AA6B2' },
+                    { name: 'Researching', value: universities.filter(u => u.status === 'researching').length, color: '#9DB2BF' },
+                    { name: 'Applied', value: universities.filter(u => u.status === 'applied').length, color: '#526D82' },
+                    { name: 'Admitted', value: universities.filter(u => u.status === 'admitted').length, color: '#27374D' },
                     { name: 'Rejected', value: universities.filter(u => u.status === 'rejected').length, color: '#B8860B' },
-                    { name: 'Pending', value: universities.filter(u => u.status === 'pending').length, color: '#9AA6B2' },
+                    { name: 'Pending', value: universities.filter(u => u.status === 'pending').length, color: '#526D82' },
                   ]}
                   cx="50%"
                   cy="50%"
@@ -102,11 +102,11 @@ export default function Dashboard() {
                   dataKey="value"
                 >
                   {[
-                    { name: 'Researching', value: universities.filter(u => u.status === 'researching').length, color: '#BCCCDC' },
-                    { name: 'Applied', value: universities.filter(u => u.status === 'applied').length, color: '#D9EAFD' },
-                    { name: 'Admitted', value: universities.filter(u => u.status === 'admitted').length, color: '#9AA6B2' },
+                    { name: 'Researching', value: universities.filter(u => u.status === 'researching').length, color: '#9DB2BF' },
+                    { name: 'Applied', value: universities.filter(u => u.status === 'applied').length, color: '#526D82' },
+                    { name: 'Admitted', value: universities.filter(u => u.status === 'admitted').length, color: '#27374D' },
                     { name: 'Rejected', value: universities.filter(u => u.status === 'rejected').length, color: '#B8860B' },
-                    { name: 'Pending', value: universities.filter(u => u.status === 'pending').length, color: '#9AA6B2' },
+                    { name: 'Pending', value: universities.filter(u => u.status === 'pending').length, color: '#526D82' },
                   ].map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}

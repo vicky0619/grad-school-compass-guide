@@ -65,23 +65,23 @@ export default {
 				},
 				// Modern grad school compass colors
 				academic: {
-					navy: '#9AA6B2',
-					blue: '#BCCCDC',
-					green: '#D9EAFD',
-					light: '#F8FAFC',
-					accent: '#BCCCDC'
+					navy: '#27374D',
+					blue: '#526D82',
+					green: '#9DB2BF',
+					light: '#DDE6ED',
+					accent: '#526D82'
 				},
 				status: {
-					researching: '#BCCCDC',
-					applied: '#D9EAFD',
-					admitted: '#9AA6B2',
+					researching: '#9DB2BF',
+					applied: '#526D82',
+					admitted: '#27374D',
 					rejected: '#B8860B',
-					pending: '#9AA6B2'
+					pending: '#526D82'
 				},
 				tag: {
-					reach: '#D9EAFD',
-					target: '#BCCCDC',
-					safety: '#9AA6B2'
+					reach: '#27374D',
+					target: '#526D82',
+					safety: '#9DB2BF'
 				},
 			},
 			borderRadius: {
