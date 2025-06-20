@@ -36,6 +36,334 @@ export type Database = {
         }
         Relationships: []
       }
+      universities: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          program_name: string
+          url: string | null
+          location: string
+          deadline: string
+          status: Database["public"]["Enums"]["application_status"]
+          tag: Database["public"]["Enums"]["university_tag"]
+          application_fee: number | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          program_name: string
+          url?: string | null
+          location: string
+          deadline: string
+          status?: Database["public"]["Enums"]["application_status"]
+          tag?: Database["public"]["Enums"]["university_tag"]
+          application_fee?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          program_name?: string
+          url?: string | null
+          location?: string
+          deadline?: string
+          status?: Database["public"]["Enums"]["application_status"]
+          tag?: Database["public"]["Enums"]["university_tag"]
+          application_fee?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "universities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      requirements: {
+        Row: {
+          id: string
+          university_id: string
+          user_id: string
+          gre: number
+          toefl: number
+          gpa: number
+          background: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          university_id: string
+          user_id: string
+          gre?: number
+          toefl?: number
+          gpa?: number
+          background?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          university_id?: string
+          user_id?: string
+          gre?: number
+          toefl?: number
+          gpa?: number
+          background?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirements_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      deadlines: {
+        Row: {
+          id: string
+          university_id: string
+          user_id: string
+          title: string
+          date: string
+          type: Database["public"]["Enums"]["deadline_type"]
+          completed: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          university_id: string
+          user_id: string
+          title: string
+          date: string
+          type?: Database["public"]["Enums"]["deadline_type"]
+          completed?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          university_id?: string
+          user_id?: string
+          title?: string
+          date?: string
+          type?: Database["public"]["Enums"]["deadline_type"]
+          completed?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deadlines_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deadlines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      documents: {
+        Row: {
+          id: string
+          university_id: string
+          user_id: string
+          name: string
+          type: Database["public"]["Enums"]["document_type"]
+          content: string | null
+          file_url: string | null
+          version: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          university_id: string
+          user_id: string
+          name: string
+          type?: Database["public"]["Enums"]["document_type"]
+          content?: string | null
+          file_url?: string | null
+          version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          university_id?: string
+          user_id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["document_type"]
+          content?: string | null
+          file_url?: string | null
+          version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      post_grad_info: {
+        Row: {
+          id: string
+          university_id: string
+          user_id: string
+          opt_eligible: boolean
+          stem_designated: boolean
+          h1b_sponsorship: boolean
+          average_salary: number
+          top_employers: string[]
+          job_placement_rate: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          university_id: string
+          user_id: string
+          opt_eligible?: boolean
+          stem_designated?: boolean
+          h1b_sponsorship?: boolean
+          average_salary?: number
+          top_employers?: string[]
+          job_placement_rate?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          university_id?: string
+          user_id?: string
+          opt_eligible?: boolean
+          stem_designated?: boolean
+          h1b_sponsorship?: boolean
+          average_salary?: number
+          top_employers?: string[]
+          job_placement_rate?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_grad_info_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_grad_info_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_scores: {
+        Row: {
+          id: string
+          user_id: string
+          gre_total: number | null
+          gre_verbal: number | null
+          gre_quant: number | null
+          gre_writing: number | null
+          toefl_total: number | null
+          ielts_total: number | null
+          gpa: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          gre_total?: number | null
+          gre_verbal?: number | null
+          gre_quant?: number | null
+          gre_writing?: number | null
+          toefl_total?: number | null
+          ielts_total?: number | null
+          gpa?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          gre_total?: number | null
+          gre_verbal?: number | null
+          gre_quant?: number | null
+          gre_writing?: number | null
+          toefl_total?: number | null
+          ielts_total?: number | null
+          gpa?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -44,7 +372,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      application_status: "researching" | "applied" | "admitted" | "rejected" | "pending"
+      university_tag: "reach" | "target" | "safety"
+      deadline_type: "application" | "document" | "recommendation" | "other"
+      document_type: "sop" | "cv" | "recommendation" | "transcript" | "other"
     }
     CompositeTypes: {
       [_ in never]: never

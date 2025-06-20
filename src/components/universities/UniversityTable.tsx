@@ -1,6 +1,5 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { universities } from "@/data/mockData";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useUniversities } from "@/hooks/useUniversities";
+import { AddUniversityDialog } from "@/components/forms/AddUniversityDialog";
 
 export function UniversityTable() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,10 +19,12 @@ export function UniversityTable() {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
+  const { data: universities = [], isLoading } = useUniversities();
+
   const filteredAndSortedUniversities = useMemo(() => {
     const filtered = universities.filter(university => {
       const matchesSearch = university.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           university.programName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           university.program_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            university.location.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || university.status === statusFilter;
       const matchesTag = tagFilter === "all" || university.tag === tagFilter;
@@ -90,10 +93,7 @@ export function UniversityTable() {
             <Filter className="h-4 w-4" />
           </Button>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add University
-        </Button>
+        <AddUniversityDialog />
       </div>
 
       {/* Filter Row */}
@@ -223,9 +223,9 @@ export function UniversityTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{university.programName}</div>
-                    {university.applicationFee && (
-                      <div className="text-sm text-muted-foreground">${university.applicationFee} fee</div>
+                    <div className="font-medium">{university.program_name}</div>
+                    {university.application_fee && (
+                      <div className="text-sm text-muted-foreground">${university.application_fee} fee</div>
                     )}
                   </TableCell>
                   <TableCell>{university.location}</TableCell>

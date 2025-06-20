@@ -1,14 +1,16 @@
 
-import { Button } from "@/components/ui/button";
 import { UniversityTable } from "@/components/universities/UniversityTable";
 import { RequirementsTracker } from "@/components/universities/RequirementsTracker";
 import { PostGradPlanning } from "@/components/post-grad/PostGradPlanning";
+import { AddUniversityDialog } from "@/components/forms/AddUniversityDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, BarChart3, Target, GraduationCap } from "lucide-react";
-import { universities } from "@/data/mockData";
+import { BarChart3, Target, GraduationCap } from "lucide-react";
+import { useUniversities } from "@/hooks/useUniversities";
 
 export default function Universities() {
+  const { data: universities = [], isLoading } = useUniversities();
+  
   const stats = {
     total: universities.length,
     applied: universities.filter(u => u.status === 'applied').length,
@@ -18,14 +20,25 @@ export default function Universities() {
     safety: universities.filter(u => u.tag === 'safety').length,
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-3xl font-bold tracking-tight">Universities</h2>
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading universities...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Universities</h2>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add University
-        </Button>
+        <AddUniversityDialog />
       </div>
 
       {/* Quick Stats */}

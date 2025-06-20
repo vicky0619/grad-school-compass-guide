@@ -8,11 +8,33 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { universities, deadlines, documents } from "@/data/mockData";
+import { useUniversities } from "@/hooks/useUniversities";
+import { useDeadlines } from "@/hooks/useDeadlines";
+import { useDocuments } from "@/hooks/useDocuments";
 import { CalendarDays, BookOpen, FileText, TrendingUp, Target, AlertCircle, CheckCircle, Bell } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from "recharts";
 
 export default function Dashboard() {
+  const { data: universities = [], isLoading: universitiesLoading } = useUniversities();
+  const { data: deadlines = [], isLoading: deadlinesLoading } = useDeadlines();
+  const { data: documents = [], isLoading: documentsLoading } = useDocuments();
+
+  const isLoading = universitiesLoading || deadlinesLoading || documentsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
